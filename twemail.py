@@ -79,7 +79,8 @@ class Twemail:
             for raw_tweet in raw_tweets:
                 tweets.append(self._parse_tweet(raw_tweet))
         else:
-            print(raw_tweets.status_code)
+            pass
+            #print(raw_tweets.status_code)
             #todo: error reporting
         return tweets
 
@@ -109,6 +110,30 @@ class Twemail:
         local_creation_time = creation_time.astimezone(localtz)
         tweet['datetime'] = local_creation_time
 
+        #extract and normalise everything that needs to be a link
+        tweet['links'] = []
+        for user_mention in raw_tweet['entities']['user_mentions']:
+            details = {}
+            details['start'] = user_mention['indices'][0]
+            details['end'] = user_mention['indices'][1]
+            details['url'] = "https://twitter.com/%s" % user_mention['screen_name']
+            tweet['links'].append(details)
+
+        for url in raw_tweet['entities']['urls']:
+            details = {}
+            details['start'] = url['indices'][0]
+            details['end'] = url['indices'][1]
+            details['url'] = url['expanded_url']
+            tweet['links'].append(details)
+
+        for hashtag in raw_tweet['entities']['hashtags']:
+            details = {}
+            details['start'] = hashtag['indices'][0]
+            details['end'] = hashtag['indices'][1]
+            details['url'] = "https://twitter.com/hashtag/%s?src=hash" % hashtag['text']
+            tweet['links'].append(details)
+
+
         return tweet
 
     def format_tweets(self, tweets):
@@ -117,10 +142,43 @@ class Twemail:
         """
         tweet_list = sorted(list(tweets), key = lambda tweet: tweet['datetime'])
 
+        content = ""
+        for tweet in tweet_list:
+
+
         #TODO: needs a nicer way to format your tweets
-        content = "\n\n".join("<p><b><a href=\"https://twitter.com/{0}\">{0}:</a> </b>{1}<br/><small><a href=\"https://twitter.com/{0}/status/{3}\">{2}</a></small></p>".format(tweet['author'], tweet['text'], tweet['datetime'].strftime("%A %H:%M"), tweet['id']) for tweet in tweet_list)
+            tweet_text = self._add_links_to_text(tweet['text'], tweet['links'])
+
+            tweet_content = "<p><b><a href=\"https://twitter.com/{0}\">{0}:</a> </b>{1}<br/><small><a href=\"https://twitter.com/{0}/status/{3}\">{2}</a></small></p>\n\n".format(tweet['author'], tweet_text, tweet['datetime'].strftime("%A %H:%M"), tweet['id'])
+            content += tweet_content
 
         return content
+
+    def _add_links_to_text(self, text, links):
+        #assumption: links never overlap
+
+        if links:
+            text_with_links = ""
+
+            sorted_links = sorted(links, key = lambda x: x['start'])
+            print(sorted_links)
+
+            cursor = 0
+
+            for link in sorted_links:
+                text_with_links += text[cursor:link['start']]
+                text_with_links += "<a href=\"%s\">" % link['url']
+                cursor = link['start']
+                text_with_links += text[cursor:link['end']]
+                text_with_links += "</a>"
+                cursor = link['end']
+            text_with_links += text[cursor:]
+            print(text_with_links)
+            return text_with_links
+        else:
+            return text
+
+
 
     def send_email(self, email_content, email_address):
         """

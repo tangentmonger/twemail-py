@@ -11,7 +11,7 @@ class TwemailTest(unittest.TestCase):
         twemail = Twemail()
         self.assertEqual(twemail.get_last_tweet_id('test/record.log'), 3)
 
-    def test_get_missing_file_lest_tweet_id(self):
+    def test_get_missing_file_last_tweet_id(self):
         twemail = Twemail()
         self.assertEqual(twemail.get_last_tweet_id('no/such/file'), None)
 
@@ -38,14 +38,17 @@ class TwemailTest(unittest.TestCase):
     def test_parse_tweet(self):
         raw_tweets = pickle.load(open("test/raw_tweets.pickle", "rb"))
         twemail = Twemail()
-        #it = iter(raw_tweets.get_iterator())
         it = iter(raw_tweets)
-        raw_tweet = next(it)
+        raw_tweet = list(it)[2] #a tweet including a mention, a URL and a hashtag
         parsed_tweet = twemail._parse_tweet(raw_tweet)
-        self.assertEqual(parsed_tweet["text"], "@Alittlenutmeg oh, that's ages away!")
-        self.assertEqual(str(parsed_tweet["datetime"]), "2014-09-20 10:27:44+01:00")
-        self.assertEqual(parsed_tweet["author"], "Alittlenutmeg")
-        self.assertEqual(parsed_tweet["id"], 513258196925161472)
+        self.assertEqual(parsed_tweet["text"], "Want to learn how to create beautiful site? @WagtailCMS engineers are running workshop on Monday. It's FREE! http://t.co/WpUebwFwAE #PyConIE")
+        self.assertEqual(str(parsed_tweet["datetime"]), "2014-09-20 09:48:20+01:00")
+        self.assertEqual(parsed_tweet["author"], "pyconireland")
+        self.assertEqual(parsed_tweet["id"], 513248280705499136)
+        self.assertEqual(parsed_tweet["links"], [
+            {"start":44, "end":55, "url":"https://twitter.com/WagtailCMS"}, #mention
+            {"start":109, "end":131, "url":"http://lanyrd.com/sddyzk"}, #url
+            {"start":132, "end":140, "url":"https://twitter.com/hashtag/PyConIE?src=hash"}]) #url
     
     def test_get_authenticated_api(self):
         twemail = Twemail()
@@ -57,13 +60,38 @@ class TwemailTest(unittest.TestCase):
         tweet_id = 42
         author = "bob"
         date = datetime.datetime.now()
-        tweets = [{"text":text, "id":tweet_id, "author":author, "datetime":date}]
+        url = "www.foo.com"
+        tweets = [{"text":text, "id":tweet_id, "author":author, "datetime":date, "links": [{"url":url, "start":3, "end":8}]}]
         twemail = Twemail()
         content = twemail.format_tweets(tweets)
         self.assertIn(text, content)
         self.assertIn(str(tweet_id), content)
         self.assertIn(author, content)
         self.assertIn(str(date.hour), content)
+        self.assertIn(url, content)
+
+    def test_add_links_to_text(self):
+        text = "hello @foo goodbye"
+        links = [{"start":6, "end":10, "url":"www.foo.com"}]
+        twemail = Twemail()
+        text_with_links = twemail._add_links_to_text(text, links)
+        self.assertEqual(text_with_links, "hello <a href=\"www.foo.com\">@foo</a> goodbye")
+
+    def test_add_links_to_text_ends(self):
+        text = "@foo hi @bar"
+        links = [{"start":8, "end":12, "url":"www.bar.com"},
+                {"start":0, "end":4, "url":"www.foo.com"}]
+        twemail = Twemail()
+        text_with_links = twemail._add_links_to_text(text, links)
+        self.assertEqual(text_with_links, "<a href=\"www.foo.com\">@foo</a> hi <a href=\"www.bar.com\">@bar</a>")
+
+    def test_add_links_to_text_none(self):
+        text = "@foo hi @bar"
+        links = []
+        twemail = Twemail()
+        text_with_links = twemail._add_links_to_text(text, links)
+        self.assertEqual(text_with_links, text)
+
 
     @mock.patch('smtplib.SMTP')
     def test_sendmail(self, mock_smtp):
