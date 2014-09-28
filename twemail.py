@@ -1,4 +1,3 @@
-#!usr/bin/python3
 """Send your Twitter feed to an email address."""
 
 #third party
@@ -151,9 +150,5 @@ class Twemail:
             record = {'version':1, 'last_tweet_id':last_tweet['id']}
             with open(record_path, 'w') as record_file:
                 json.dump(record, record_file)
-
-if __name__ == "__main__":
-    twemail = Twemail()
-    twemail.run()
 
   
