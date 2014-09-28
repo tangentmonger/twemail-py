@@ -159,10 +159,7 @@ class Twemail:
 
         if links:
             text_with_links = ""
-
             sorted_links = sorted(links, key = lambda x: x['start'])
-            print(sorted_links)
-
             cursor = 0
 
             for link in sorted_links:
@@ -173,7 +170,7 @@ class Twemail:
                 text_with_links += "</a>"
                 cursor = link['end']
             text_with_links += text[cursor:]
-            print(text_with_links)
+            
             return text_with_links
         else:
             return text
