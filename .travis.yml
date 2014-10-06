@@ -7,10 +7,10 @@ install: "pip install -r requirements.txt"
 script: nosetests
 env:
     global:
-        - consumer_key=""
-        - consumer_secret=""
-        - access_token_key=""
-        - access_token_secret=""
-        - local_timezone = ""
-        - record_path = ""
-        - email_address = ""
+        - twemail_api_key=""
+        - twemail_api_secret=""
+        - twemail_access_token=""
+        - twemail_access_token_secret=""
+        - twemail_local_timezone=""
+        - twemail_record_path=""
+        - twemail_email_address=""
