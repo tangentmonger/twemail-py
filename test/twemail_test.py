@@ -21,8 +21,6 @@ class TwemailTest(unittest.TestCase):
 
     def test_process_raw_tweets_success(self):
         #Using previously pickled data of 5 tweets:
-        #with open("../test/raw_tweets.pickle", 'wb') as f:
-        #   pickle.dump(raw_tweets, f)
         raw_tweets = pickle.load(open("test/raw_tweets.pickle", "rb"))
         twemail = Twemail()
         processed_tweets = twemail._process_raw_tweets(raw_tweets)
@@ -121,6 +119,14 @@ class TwemailTest(unittest.TestCase):
         twemail.record_last_tweet_id([], path)
         with open(path, "r") as log:
             self.assertEqual(log.read(), '')
+
+    def test_media_extraction(self):
+        raw_tweets = pickle.load(open("test/tweet_with_image.pickle", "rb"))
+        twemail = Twemail()
+        parsed_tweet = twemail._process_raw_tweets(raw_tweets)[0]
+        self.assertEqual(parsed_tweet["links"], [
+            {"start":122, "end":144, "url":"http://pbs.twimg.com/media/ByopT3_CQAAZkyU.jpg"}]) #image
+    
 
 
 if __name__ == "__main__":

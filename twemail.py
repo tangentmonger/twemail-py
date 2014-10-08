@@ -133,7 +133,14 @@ class Twemail:
             details['url'] = "https://twitter.com/hashtag/%s?src=hash" % hashtag['text']
             tweet['links'].append(details)
 
-
+        if 'media' in raw_tweet['entities']:
+            for media in raw_tweet['entities']['media']:
+                details = {}
+                details['start'] = media['indices'][0]
+                details['end'] = media['indices'][1]
+                details['url'] = media['media_url']
+                tweet['links'].append(details)
+        
         return tweet
 
     def format_tweets(self, tweets):
