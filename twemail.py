@@ -57,7 +57,7 @@ class Twemail:
         """
         twitter = self._get_authenticated_api()
         raw_tweets = twitter.request('statuses/home_timeline',
-            {'since_id':last_tweet_id})
+            {'since_id':last_tweet_id, 'count':200}) 
         tweets = self._process_raw_tweets(raw_tweets)
         return tweets
 
